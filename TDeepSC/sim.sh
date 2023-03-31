@@ -1,0 +1,12 @@
+TF_ENABLE_ONEDNN_OPTS=0 CUDA_VISIBLE_DEVICES=1  python3  sim_main.py \
+    --model  TDeepSC_imgc_model  \
+    --output_dir ckpt_record   \
+    --batch_size 50 \
+    --input_size 32 \
+    --lr  3e-5 \
+    --epochs 200  \
+    --opt_betas 0.95 0.99  \
+    --save_freq 5   \
+    --ta_perform imgc \
+    --resume /Data1/zhangguangyi/SemanRes2/JSACCode/TDeepSC_Base/ckpt_record/ckpt_imgc/checkpoint-119.pth  \
+    --eval 
