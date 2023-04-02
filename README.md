@@ -1,8 +1,8 @@
 # PyTorch implementation of [A Unified Multi-Task Semantic Communication System for Multimodal Data](https://arxiv.org/abs/2209.07689)
 
-This repository is built upon [BEiT](https://github.com/microsoft/unilm/tree/master/beit) and [MAE] (https://github.com/pengzhiliang/MAE-pytorch), thanks very much!
+This repository is built upon [BEiT](https://github.com/microsoft/unilm/tree/master/beit) and [MAE](https://github.com/pengzhiliang/MAE-pytorch), thanks very much!
 
-We would graduaally upload the full-version of the implementation.
+We would gradually upload the full-version of the implementation.
 
 ## TODO
 - [x] implement the designed benchmark: task-oriented semantic communication works (T-DeepSC) for the considered tasks, including image(cls/recons), text(cls/recons) under analog transmission.
