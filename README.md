@@ -9,7 +9,6 @@ We would gradually upload the full-version of the implementation.
 - [x] implement the designed benchmark: TDeepSC for VQA and MSA under analog transmission.
 - [x] implement the digital transmission: vector quantization (VQ) and uniform scalar quantization (SQ). 
 - [x] implement the 16QAM and QPSK modulations.
-- [x] visualization of reconstruction image
 - [ ] dataset preparation
 - [ ] the unified semantic communication (U-DeepSC).
 - [ ] visualization of the results.
