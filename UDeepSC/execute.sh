@@ -1,0 +1,12 @@
+CUDA_VISIBLE_DEVICES=2  python3  udeepsc_main.py \
+    --model  UDeepSC_model  \
+    --output_dir ckpt_record   \
+    --batch_size 50 \
+    --input_size 32 \
+    --lr  3e-5 \
+    --epochs 220  \
+    --opt_betas 0.95 0.99  \
+    --save_freq 5   \
+    --ta_perform vqa \
+    --resume /Data1/zhangguangyi/SemanRes2/JSACCode/UDeepSC_Base/ckpt_record/ckpt_imgc/checkpoint-214.pth \
+    --eval  
