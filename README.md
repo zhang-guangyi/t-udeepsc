@@ -11,8 +11,7 @@ We would gradually upload the full-version of the implementation.
 - [x] implement the 16QAM and QPSK modulations.
 - [ ] dataset preparation
 - [X] the basic version of the unified semantic communication (U-DeepSC).
-- [ ] the code for dynamic overhead.
-- [ ] visualization of the results.
+
 
 
 
