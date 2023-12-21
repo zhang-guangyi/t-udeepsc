@@ -1,12 +1,13 @@
-TF_ENABLE_ONEDNN_OPTS=2 CUDA_VISIBLE_DEVICES=3  python3  tdeepsc_main.py \
-    --model  TDeepSC_textr_model  \
-    --output_dir ckpt_record   \
-    --batch_size 5 \
+CUDA_VISIBLE_DEVICES=2 python3  tdeepsc_main.py \
+    --model  TDeepSC_vqa_model  \
+    --output_dir ckpt_record_12dB_11  \
+    --batch_size 30 \
     --input_size 32 \
-    --lr  3e-4 \
+    --lr  1e-4 \
     --epochs 200  \
     --opt_betas 0.95 0.99  \
     --save_freq 2   \
-    --ta_perform textr \
-    # --resume /Data1/zhangguangyi/SemanRes2/JSACCode/TDeepSC_Base/ckpt_record/ckpt_textc/checkpoint-44.pth  \
-    # --eval 
+    --ta_perform vqa  \
+    --resume ckpt_record_12dB/ckpt_vqa/checkpoint-37.pth \
+  
+   

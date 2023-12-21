@@ -53,30 +53,30 @@ def get_model(args):
         drop_block_rate=None,
     )
     # Model info logging
-    if args.ta_perform.startswith('vqa'):
-        img = torch.randn(100,2048).unsqueeze(0)
-    elif args.ta_perform.startswith('msa'):
-        img = torch.randn(32,47).unsqueeze(0)
-        spe = torch.randn(32,74).unsqueeze(0)
-    else:
-        img = torch.randn(3,32,32).unsqueeze(0)
-    text = torch.randint(0,340,(1,66))
+    # if args.ta_perform.startswith('vqa'):
+    #     img = torch.randn(100,2048).unsqueeze(0)
+    # elif args.ta_perform.startswith('msa'):
+    #     img = torch.randn(32,35).unsqueeze(0)
+    #     spe = torch.randn(32,74).unsqueeze(0)
+    # else:
+    #     img = torch.randn(3,32,32).unsqueeze(0)
+    # text = torch.randint(0,340,(1,66))
     
-    if args.ta_perform.startswith('msa'):
-        flops, params = thop.profile(model, inputs=(text,img,spe,args.ta_perform), verbose=False)
-    else:
-        flops, params = thop.profile(model, inputs=(text,img,args.ta_perform), verbose=False)
-    flops, params = thop.clever_format([flops, params], "%.3f")
-    print(f'=> Model Flops: {flops}')
+    # if args.ta_perform.startswith('msa'):
+    #     flops, params = thop.profile(model, inputs=(text,img,spe,args.ta_perform), verbose=False)
+    # else:
+    #     flops, params = thop.profile(model, inputs=(text,img,args.ta_perform), verbose=False)
+    # flops, params = thop.clever_format([flops, params], "%.3f")
+    # print(f'=> Model Flops: {flops}')
      
-    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('=> Number of params: {} M'.format(n_parameters / 1e6))
+    # n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # print('=> Number of params: {} M'.format(n_parameters / 1e6))
     
     return model
 
 def load_checkpoint(model,args):
     checkpoint = torch.load(args.resume, map_location='cpu')
-
+    print(args.resume)
     print("Load ckpt from the place")
     checkpoint_model = None
     for model_key in args.model_key.split('|'):
@@ -95,8 +95,15 @@ def load_checkpoint(model,args):
     all_keys = list(checkpoint_model.keys())
     new_dict = OrderedDict()
     for key in all_keys:
-        if key.startswith('encoder.'):
-            new_dict['img_'+key] = checkpoint_model[key]
+        # print(key)
+        if key.startswith('blocks.'):
+            new_dict['img_encoder.'+key] = checkpoint_model[key]
+        elif key.startswith('patch'):
+            new_dict['img_encoder.'+key] = checkpoint_model[key]
+        elif key.startswith('cls'):
+            new_dict['img_encoder.'+key] = checkpoint_model[key]
+        elif key.startswith('norm'):
+            new_dict['img_encoder.'+key] = checkpoint_model[key]
         else:
             new_dict[key] = checkpoint_model[key]
     checkpoint_model = new_dict
@@ -517,11 +524,9 @@ from nltk.translate.bleu_score import sentence_bleu
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 def tokens2sentence(outputs):
     sentences = []
-    #print(outputs)
     for tokens in outputs:
         sentence = []
         for token in tokens:
-            
             word = tokenizer.decode([int(token)])
  
             if word == '[PAD]':

@@ -60,7 +60,7 @@ class Attention(nn.Module):
         all_head_dim = head_dim * self.num_heads
         self.scale = qk_scale or head_dim ** -0.5
 
-        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=False)
+        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=True)
         if qkv_bias:
             self.q_bias = nn.Parameter(torch.zeros(all_head_dim))
             self.v_bias = nn.Parameter(torch.zeros(all_head_dim))
@@ -293,6 +293,65 @@ class Decoder(nn.Module):
             x = dec_layer(x, memory, look_ahead_mask, trg_padding_mask)  
         return x
 
+
+
+from einops import rearrange, repeat     
+
+def exists(val):
+    return val is not None
+
+
+class CNN_embedd(nn.Module):
+    def __init__(self,
+                 kernel_size=7, stride=2, padding=3,
+                 pooling_kernel_size=3, pooling_stride=2, pooling_padding=1,
+                 n_conv_layers=1,
+                 n_input_channels=3,
+                 n_output_channels=64,
+                 in_planes=64,
+                 activation=nn.ReLU,
+                 max_pool=True,
+                 conv_bias=False):
+        super().__init__()
+
+        n_filter_list = [n_input_channels] + \
+                        [in_planes for _ in range(n_conv_layers - 1)] + \
+                        [n_output_channels]
+
+        n_filter_list_pairs = zip(n_filter_list[:-1], n_filter_list[1:])
+
+        self.conv_layers = nn.Sequential(
+            *[nn.Sequential(
+                nn.Conv2d(chan_in, chan_out,
+                          kernel_size=(kernel_size, kernel_size),
+                          stride=(stride, stride),
+                          padding=(padding, padding), bias=conv_bias),
+                nn.Identity() if not exists(activation) else activation(),
+                nn.MaxPool2d(kernel_size=pooling_kernel_size,
+                             stride=pooling_stride,
+                             padding=pooling_padding) if max_pool else nn.Identity()
+            )
+                for chan_in, chan_out in n_filter_list_pairs
+            ])
+
+        self.apply(self.init_weight)
+
+    def sequence_length(self, n_channels=3, height=224, width=224):
+        return self.forward(torch.zeros((1, n_channels, height, width))).shape[1]
+
+    def forward(self, x):
+        return rearrange(self.conv_layers(x), 'b c h w -> b (h w) c')
+
+    @staticmethod
+    def init_weight(m):
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight)
+
+
+
+
+
+
 class ViTEncoder_imgcr(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
@@ -323,6 +382,11 @@ class ViTEncoder_imgcr(nn.Module):
                 init_values=init_values)
             for i in range(depth)])
         self.norm =  norm_layer(embed_dim)
+    
+        self.CNN_embed = CNN_embedd(n_input_channels=3,
+                                   n_output_channels=embed_dim)
+        
+        
         if use_learnable_pos_emb:
             trunc_normal_(self.pos_embed, std=.02)
         trunc_normal_(self.cls_token, std=.02)
@@ -347,6 +411,7 @@ class ViTEncoder_imgcr(nn.Module):
     def forward_features(self, x, ta_perform):
         if ta_perform.startswith('img'):
             x = self.patch_embed(x)
+            # x = self.CNN_embed(x)
             batch_size = x.shape[0]
             cls_tokens = self.cls_token.expand(batch_size, -1, -1) 
             x = torch.cat((cls_tokens, x), dim=1)
@@ -430,7 +495,7 @@ class ViTEncoder_msa(nn.Module):
         super().__init__()
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
 
-        self.linear_embed_msa = nn.Linear(47, self.embed_dim)
+        self.linear_embed_msa = nn.Linear(35, self.embed_dim)
 
         # TODO: Add the cls token
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -463,8 +528,12 @@ class ViTEncoder_msa(nn.Module):
     def no_weight_decay(self):
         return {'pos_embed', 'cls_token'}
 
+    def __len__(self,):
+        return len()
+    
     def forward_features(self, x, ta_perform):
         if ta_perform.startswith('msa'):
+            # print(x.shape)
             x = self.linear_embed_msa(x)
             batch_size = x.shape[0]
             cls_tokens = self.cls_token.expand(batch_size, -1, -1) 
@@ -553,13 +622,13 @@ def noise_gen(is_train):
         # channel_snr = 10*torch.log10((1/noise_var)**2)
         # channel_snr = torch.rand(1)*diff_snr+min_snr
         # noise_var = 10**(-channel_snr/20)
-        channel_snr = torch.FloatTensor([18])
+        channel_snr = torch.FloatTensor([12])
         noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
     else:
-        channel_snr = torch.FloatTensor([18])
+        channel_snr = torch.FloatTensor([12])
         noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
     return channel_snr, noise_var 
- 
+
 
 class VectorQuantizer(nn.Module):
     """
@@ -615,26 +684,25 @@ class VectorQuantizer(nn.Module):
     
 
 class Channels():
-    
-    def AWGN(self, Tx_sig, n_var):
+    def AWGN(self, Tx_sig, n_std):
         device = Tx_sig.device
-        Rx_sig = Tx_sig + torch.normal(0, n_var, size=Tx_sig.shape).to(device)
+        noise = torch.normal(0, n_std/math.sqrt(2), size=Tx_sig.shape).to(device)
+        Rx_sig = Tx_sig + noise
         return Rx_sig
 
-    def Rayleigh(self, Tx_sig, n_var):
+    def Rayleigh(self, Tx_sig, n_std):
         device = Tx_sig.device
         shape = Tx_sig.shape
         H_real = torch.normal(0, math.sqrt(1/2), size=[1]).to(device)
         H_imag = torch.normal(0, math.sqrt(1/2), size=[1]).to(device)
         H = torch.Tensor([[H_real, -H_imag], [H_imag, H_real]]).to(device)
         Tx_sig = torch.matmul(Tx_sig.view(shape[0], -1, 2), H)
-        Rx_sig = self.AWGN(Tx_sig, n_var)
+        Rx_sig = self.AWGN(Tx_sig, n_std)
         # Channel estimation
         Rx_sig = torch.matmul(Rx_sig, torch.inverse(H)).view(shape)
-
         return Rx_sig
 
-    def Rician(self, Tx_sig, n_var, K=1):
+    def Rician(self, Tx_sig, n_std, K=1):
         device = Tx_sig.device
         shape = Tx_sig.shape
         mean = math.sqrt(K / (K + 1))
@@ -643,81 +711,9 @@ class Channels():
         H_imag = torch.normal(mean, std, size=[1]).to(device)
         H = torch.Tensor([[H_real, -H_imag], [H_imag, H_real]]).to(device)
         Tx_sig = torch.matmul(Tx_sig.view(shape[0], -1, 2), H)
-        Rx_sig = self.AWGN(Tx_sig, n_var)
+        Rx_sig = self.AWGN(Tx_sig, n_std)
         # Channel estimation
         Rx_sig = torch.matmul(Rx_sig, torch.inverse(H)).view(shape)
 
         return Rx_sig
-    
 
-
-# Number to Bit Defining Function Defining
-# Number to Bit Defining Function Defining
-def Num2Bit(Num, B):
-    Num_ = Num.type(torch.uint8)
-    def integer2bit(integer, num_bits=B * 2):
-        dtype = integer.type()
-        exponent_bits = -torch.arange(-(num_bits - 1), 1).type(dtype)
-        exponent_bits = exponent_bits.repeat(integer.shape + (1,))
-        out = integer.unsqueeze(-1) // 2 ** exponent_bits
-        return (out - (out % 1)) % 2
-    bit = integer2bit(Num_)
-    bit = (bit[:, :, B:]).reshape(-1, Num_.shape[1] * B)
-    return bit.type(torch.float32)
-def Bit2Num(Bit, B):
-    Bit_ = Bit.type(torch.float32)
-    Bit_ = torch.reshape(Bit_, [-1, int(Bit_.shape[1] / B), B])
-    num = torch.zeros(Bit_[:, :, 0].shape).cuda()
-    for i in range(B):
-        num = num + Bit_[:, :, i] * 2 ** (B - 1 - i)
-    return num
-#=======================================================================================================================
-#=======================================================================================================================
-# Quantization and Dequantization Layers Defining
-class Quantization(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, x, B):
-        ctx.constant = B
-        step = 2 ** B
-        out = torch.round(x * step - 0.5)
-        out = Num2Bit(out, B)
-        return out
-    @staticmethod
-    def backward(ctx, grad_output):
-        # return as many input gradients as there were arguments.
-        # Gradients of constant arguments to forward must be None.
-        # Gradient of a number is the sum of its B bits.
-        b, _ = grad_output.shape
-        grad_num = torch.sum(grad_output.reshape(b, -1, ctx.constant), dim=2) / ctx.constant
-        return grad_num, None
-class Dequantization(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, x, B):
-        ctx.constant = B
-        step = 2 ** B
-        out = Bit2Num(x, B)
-        out = (out + 0.5) / step
-        return out
-    @staticmethod
-    def backward(ctx, grad_output):
-        # return as many input gradients as there were arguments.
-        # Gradients of non-Tensor arguments to forward must be None.
-        # repeat the gradient of a Num for B time.
-        b, c = grad_output.shape
-        grad_output = grad_output.unsqueeze(2) / ctx.constant
-        grad_bit = grad_output.expand(b, c, ctx.constant)
-        return torch.reshape(grad_bit, (-1, c * ctx.constant)), None
-class QuantizationLayer(nn.Module):
-    def __init__(self, B):
-        super(QuantizationLayer, self).__init__()
-        self.B = B
-    def forward(self, x):
-        out = Quantization.apply(x, self.B)
-        return out 
-class DequantizationLayer(nn.Module):
-    def __init__(self, B):
-        super(DequantizationLayer, self).__init__()
-        self.B = B
-    def forward(self, x):
-        out = Dequantization.apply(x, self.B)
-        return out

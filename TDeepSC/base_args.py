@@ -36,7 +36,7 @@ def get_args():
                         help='Clip gradient norm (default: None, no clipping)')
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum (default: 0.9)')
-    parser.add_argument('--weight_decay', type=float, default=0.01,
+    parser.add_argument('--weight_decay', type=float, default=0.0001,
                         help='weight decay (default: 0.02)')
     parser.add_argument('--weight_decay_end', type=float, default=None, help="""Final value of the
         weight decay. We use a cosine schedule for WD. 

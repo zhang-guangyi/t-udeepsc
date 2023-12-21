@@ -5,8 +5,16 @@ from timm.models.layers import drop_path, to_2tuple, trunc_normal_
 
 import torch
 import torch.nn as nn
+from channel import *
 from functools import partial
 import torch.nn.functional as F
+
+
+import timm
+net = timm.create_model("vit_base_patch16_384", pretrained=True)
+
+
+
 
 def _cfg(url='', **kwargs):
     return {
@@ -16,7 +24,7 @@ def _cfg(url='', **kwargs):
         'mean': (0.5, 0.5, 0.5), 'std': (0.5, 0.5, 0.5),
         **kwargs
     }
-
+# nohup   > log_files/demo_t_14dB.log 2>&1 &
 def noise_gen(is_train):
     min_snr, max_snr = -6, 18
     diff_snr = max_snr - min_snr
@@ -34,10 +42,10 @@ def noise_gen(is_train):
         # channel_snr = 10*torch.log10((1/noise_var)**2)
         # channel_snr = torch.rand(1)*diff_snr+min_snr
         # noise_var = 10**(-channel_snr/20)
-        channel_snr = torch.FloatTensor([15])
+        channel_snr = torch.FloatTensor([12])
         noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
     else:
-        channel_snr = torch.FloatTensor([20])
+        channel_snr = torch.FloatTensor([12])
         noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
     return channel_snr, noise_var 
 
@@ -117,8 +125,8 @@ class Attention(nn.Module):
         return x
 
 
-class Block(nn.Module):
 
+class Block(nn.Module):
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., init_values=None, act_layer=nn.GELU, norm_layer=nn.LayerNorm,
                  attn_head_dim=None):
@@ -400,7 +408,7 @@ class ViTEncoder(nn.Module):
         self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         self.linear_embed_vqa = nn.Linear(2048, self.embed_dim)
-        self.linear_embed_msa = nn.Linear(47, self.embed_dim)
+        self.linear_embed_msa = nn.Linear(35, self.embed_dim)
         num_patches = self.patch_embed.num_patches
 
         # TODO: Add the cls token
@@ -461,6 +469,7 @@ class ViTEncoder(nn.Module):
             task_embedd = self.task_embedd[ta_perform].expand(batch_size, -1, -1).to(x.device)
             x = torch.cat((cls_tokens, x, task_embedd), dim=1)
         elif ta_perform.startswith('msa'):
+        
             x = self.linear_embed_msa(x)
             batch_size = x.shape[0]
             cls_tokens = self.cls_token[ta_perform].expand(batch_size, -1, -1).to(x.device)
@@ -600,25 +609,25 @@ class VectorQuantizer(nn.Module):
 
 class Channels():
     
-    def AWGN(self, Tx_sig, n_var):
+    def AWGN(self, Tx_sig, n_std):
         device = Tx_sig.device
-        Rx_sig = Tx_sig + torch.normal(0, n_var, size=Tx_sig.shape).to(device)
+        noise = torch.normal(0, n_std/math.sqrt(2), size=Tx_sig.shape).to(device)
+        Rx_sig = Tx_sig + noise
         return Rx_sig
-
-    def Rayleigh(self, Tx_sig, n_var):
+ 
+    def Rayleigh(self, Tx_sig, n_std):
         device = Tx_sig.device
         shape = Tx_sig.shape
         H_real = torch.normal(0, math.sqrt(1/2), size=[1]).to(device)
         H_imag = torch.normal(0, math.sqrt(1/2), size=[1]).to(device)
         H = torch.Tensor([[H_real, -H_imag], [H_imag, H_real]]).to(device)
         Tx_sig = torch.matmul(Tx_sig.view(shape[0], -1, 2), H)
-        Rx_sig = self.AWGN(Tx_sig, n_var)
+        Rx_sig = self.AWGN(Tx_sig, n_std)
         # Channel estimation
         Rx_sig = torch.matmul(Rx_sig, torch.inverse(H)).view(shape)
-
         return Rx_sig
 
-    def Rician(self, Tx_sig, n_var, K=1):
+    def Rician(self, Tx_sig, n_std, K=1):
         device = Tx_sig.device
         shape = Tx_sig.shape
         mean = math.sqrt(K / (K + 1))
@@ -627,8 +636,8 @@ class Channels():
         H_imag = torch.normal(mean, std, size=[1]).to(device)
         H = torch.Tensor([[H_real, -H_imag], [H_imag, H_real]]).to(device)
         Tx_sig = torch.matmul(Tx_sig.view(shape[0], -1, 2), H)
-        Rx_sig = self.AWGN(Tx_sig, n_var)
+        Rx_sig = self.AWGN(Tx_sig, n_std)
         # Channel estimation
         Rx_sig = torch.matmul(Rx_sig, torch.inverse(H)).view(shape)
-
         return Rx_sig
+

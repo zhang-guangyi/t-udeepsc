@@ -2,8 +2,6 @@ import math
 import torch
 import numpy as np
 
-
-
 bit_per_symbol = 4 # bits per symbol (64QAM)
 mapping_table = {
     (1,0,1,0) : -3-3j,
@@ -152,7 +150,6 @@ def transmit(data, SNRdb, bits_per_digit):
     for i in range(len(Tx_data_binary)):
         data_back.append(int(data_dec[i],2))
     data_back = np.array(data_back)
-
     return data_back
 
 

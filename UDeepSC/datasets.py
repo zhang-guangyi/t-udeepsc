@@ -68,7 +68,7 @@ def build_dataloader(ta_sel, trainsets, args):
         Collate_fn = collate_fn if ta.startswith('msa') else None 
         trainloader = torch.utils.data.DataLoader(dataset=trainset,
                                                 sampler=BatchSchedulerSampler(dataset=trainset,batch_size=args.batch_size,
-                                                number_samp=5000*len(ta_sel)),
+                                                number_samp=10000*len(ta_sel)),
                                                 num_workers=args.num_workers, pin_memory=True,
                                                 batch_size=args.batch_size, shuffle=False,collate_fn=Collate_fn)
         trainloaders[ta] = trainloader
@@ -97,7 +97,7 @@ def build_dataset_test(is_train, args):
         dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                         download=True, if_class=False)
     elif args.ta_perform.startswith('textc'):
-        dataset = SST_CR(root=True, train=is_train, binary=True, if_class=True)
+        dataset = SST_CR(root=False, train=is_train, binary=True, if_class=True)
 
     elif args.ta_perform.startswith('textr'):
         dataset = SST_CR(root=True, train=is_train, binary=True, if_class=False)
@@ -139,7 +139,7 @@ def build_dataset_train(is_train, ta_sel, args):
             dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                             download=True, if_class=False)
         elif ta.startswith('textc'):
-            dataset = SST_CR(root=True, train=is_train, binary=True, if_class=True)
+            dataset = SST_CR(root=False, train=is_train, binary=True, if_class=True)
 
         elif ta.startswith('textr'):
             dataset = SST_CR(root=True, train=is_train, binary=True, if_class=False)
@@ -165,29 +165,15 @@ def build_img_transform(is_train, args):
     resize_im = args.input_size > 32
     mean = (0.,0.,0.)
     std =  (1.,1.,1.)
-
-    if is_train:
-        transform = create_transform(
-            input_size=args.input_size,
-            is_training=True,
-            interpolation=args.train_interpolation,
-            mean=mean,
-            std=std,
-        )
-        if not resize_im:
-            # RandomCrop
-            transform.transforms[0] = transforms.RandomCrop(
-                args.input_size, padding=4)
-        return transform
-
     t = []
-    if resize_im:
-        crop_pct = 1
-        size = int(args.input_size / crop_pct)
-        t.append(
-            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
-        )
-        t.append(transforms.CenterCrop(args.input_size))
+    if is_train:
+        if resize_im:
+            crop_pct = 1
+            size = int(args.input_size / crop_pct)
+            t.append(
+                transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+            )
+            t.append(transforms.CenterCrop(args.input_size))
 
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(mean, std))

@@ -105,8 +105,11 @@ def load_checkpoint(model,args):
     all_keys = list(checkpoint_model.keys())
     new_dict = OrderedDict()
     for key in all_keys:
+        # print(key)
         if key.startswith('encoder.'):
             new_dict['img_'+key] = checkpoint_model[key]
+        # elif key.startswith('text'):
+        #     continue
         else:
             new_dict[key] = checkpoint_model[key]
     checkpoint_model = new_dict

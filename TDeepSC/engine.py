@@ -356,9 +356,6 @@ def train_epoch_vqa(model: torch.nn.Module, criterion: torch.nn.Module,
     return train_stat 
 
 
-
-
-
 @torch.no_grad()
 def evaluate_msa(ta_perform: str, net: torch.nn.Module, dataloader: Iterable, 
                   device: torch.device, criterion: torch.nn.Module, print_freq=10):
@@ -380,9 +377,6 @@ def evaluate_msa(ta_perform: str, net: torch.nn.Module, dataloader: Iterable,
                  'acc': acc}
     return test_stat
     
-
-
-
 
 def train_class_batch_msa(ta_perform, model, imgs, texts, speechs, targets, criterion):
     if ta_perform.startswith('msa'):

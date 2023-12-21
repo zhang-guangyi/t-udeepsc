@@ -58,7 +58,11 @@ class SST_CR(Dataset):
                 for tree in self.sst
                 for label, line in tree.to_labeled_lines()
                 if label != 2]
-
+        # for tree in self.sst:
+        #     for label, line in tree.to_labeled_lines():
+        #         if label != 2:
+        #             print(line)
+        #             print(get_binary_label(label))
     def __len__(self):
         return len(self.data)
 

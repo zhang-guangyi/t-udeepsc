@@ -103,3 +103,4 @@ class CIFAR_CR(VisionDataset):
         download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.tgz_md5)
 
 
+

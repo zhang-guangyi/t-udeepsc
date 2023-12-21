@@ -7,7 +7,7 @@ import model
 import torch.backends.cudnn as cudnn
 
 from engine import *
-from pathlib import Path
+from pathlib import Path 
 from base_args import get_args
 from optim_factory import create_optimizer
 from utils import NativeScalerWithGradNormCount as NativeScaler
@@ -32,11 +32,12 @@ def main(args):
     ####################################### Get the model
     model = get_model(args)
     if args.resume:
+        print(args.resume)
         checkpoint_model = load_checkpoint(model, args)
         
         utils.load_state_dict(model, checkpoint_model, prefix=args.model_prefix)
 
-
+        
     model.to(device)
     model_without_ddp = model
     if args.distributed:
@@ -47,8 +48,8 @@ def main(args):
     ############## Get the data and dataloader
     
     # ta_sel = ['textr','textc']
-    ta_sel = ['imgc','textc', 'vqa','imgr']
-    # ta_sel = ['textc']
+    ta_sel = ['msa', 'textr']
+    # ta_sel = ['imgr']
     trainset_group = build_dataset_train(is_train=True, ta_sel=ta_sel, args=args)
     trainloader_group= build_dataloader(ta_sel,trainset_group, args=args)
 
@@ -93,6 +94,7 @@ def main(args):
     
     ################################## Auto load the model in the model record folder
     if args.eval:
+        
         if args.ta_perform.startswith('img') or args.ta_perform.startswith('text'):
             test_stats = evaluate(ta_perform=args.ta_perform, 
                                 net=model, dataloader=dataloader_val, 
@@ -145,6 +147,7 @@ def main(args):
                     args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                     loss_scaler=loss_scaler, epoch=epoch, model_ema=None)
         if dataloader_val is not None:
+            print(args.output_dir)
             if args.ta_perform.startswith('img') or args.ta_perform.startswith('text'):
                 test_stats = evaluate(ta_perform=args.ta_perform, 
                                     net=model, dataloader=dataloader_val, 

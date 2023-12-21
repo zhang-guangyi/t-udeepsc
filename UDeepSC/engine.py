@@ -169,25 +169,25 @@ def train_class_batch_uni(ta_perform, model, sel_batch, targets, criterion):
     imgs, texts, speechs = sel_batch
     if ta_perform.startswith('imgc'):
         outputs = model(img=imgs,ta_perform=ta_perform)
-        loss = criterion[ta_perform](outputs, targets) * 5  
+        loss = criterion[ta_perform](outputs, targets) * 1  
     elif ta_perform.startswith('imgr'):
         outputs = model(img=imgs, ta_perform=ta_perform) 
         targets = rearrange(targets, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=4, p2=4)
-        loss = criterion[ta_perform](outputs, targets) * 110
+        loss = criterion[ta_perform](outputs, targets) * 30
     elif ta_perform.startswith('textc'):
         outputs = model(text=texts, ta_perform=ta_perform)
-        loss = criterion[ta_perform](outputs, targets) * 10
+        loss = criterion[ta_perform](outputs, targets) * 0.6
     elif ta_perform.startswith('textr'):
-        outputs = model(text=texts, ta_perform=ta_perform)
+        outputs = model(text=texts, ta_perform=ta_perform) * 1
         targets = targets[:,1:]
         for i in range(outputs.shape[1]):
             loss += criterion[ta_perform](outputs[:,i], targets[:,i])*5
     elif ta_perform.startswith('vqa'):
         outputs = model(img=imgs, text=texts, ta_perform=ta_perform)
-        loss = criterion[ta_perform](outputs, targets)
+        loss = criterion[ta_perform](outputs, targets) * 3
     elif ta_perform.startswith('msa'):
         outputs = model(img=imgs, text=texts, speech=speechs, ta_perform=ta_perform)
-        loss = criterion[ta_perform](outputs, targets) * 5
+        loss = criterion[ta_perform](outputs, targets) * 8
     return loss, outputs
 
 def meter(ta_sel):
@@ -220,7 +220,8 @@ def train_epoch_uni(model: torch.nn.Module, criterion: dict,
     data_iter_step = 0
     num_tasks = len(data_dict)
     data_tuple = [data_loader for data_loader in data_dict.values()]
-    for data_batch in zip(data_tuple[0],data_tuple[1],data_tuple[2],data_tuple[3]):    
+    # data_tuple[2],data_tuple[3],data_tuple[4]
+    for data_batch in zip(data_tuple[0], data_tuple[1]):    
         step = data_iter_step // update_freq
         it = start_steps + step  
         if lr_schedule_values is not None or wd_schedule_values is not None and data_iter_step % update_freq == 0:

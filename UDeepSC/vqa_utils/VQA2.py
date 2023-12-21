@@ -57,7 +57,7 @@ class VQA2(Dataset):
             self.iid_to_img_feat_path = img_feat_path_load(self.img_feat_path_list)
 
         self.qid_to_ques = ques_load(self.ques_list)
-        self.ans_to_ix, self.ix_to_ans = ans_stat('/UDeepSC_Base/vqa_utils/answer_dict.json')
+        self.ans_to_ix, self.ix_to_ans = ans_stat('/Data1/zhangguangyi/SemanRes2/JSACCode/TDeepSC_Base/vqa_utils/answer_dict.json')
         self.ans_size = self.ans_to_ix.__len__()
 
     def __getitem__(self, idx):

@@ -108,7 +108,7 @@ class Config_MSA(object):
         word_emb_path = '/home/hqyyqh888/SemanRes2/MSA/MISA/glove/glove.840B.300d.txt'
         assert(word_emb_path is not None)
         
-        self.dataset_dir = data_dict['mosi']
+        self.dataset_dir = data_dict['mosei']
         self.sdk_dir = sdk_dir
         self.word_emb_path = word_emb_path
         self.data_dir = self.dataset_dir

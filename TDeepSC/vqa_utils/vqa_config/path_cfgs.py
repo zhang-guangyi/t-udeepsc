@@ -1,8 +1,8 @@
 import os
 class path:
     def __init__(self):
-        self.dataset_path = 'Dataset/vqav2/vqa/'
-        self.feature_path = 'Dataset/vqav2/coco_extract/'
+        self.dataset_path = 'data/vqa_datasets/vqa/'
+        self.feature_path = 'data/vqa_datasets/coco_extract/'
         self.init_path()
 
     def init_path(self):

@@ -101,14 +101,14 @@ class MSA(Dataset):
 class Config_MSA(object):
     def __init__(self,):
         project_dir = Path(__file__).resolve().parent.parent
-        sdk_dir = project_dir.joinpath('MSA/CMU-MultimodalSDK/')
+        sdk_dir = project_dir.joinpath('/home/hqyyqh888/SemanRes2/MSA/CMU-MultimodalSDK/')
         data_dir = project_dir.joinpath('data/msadata')
         data_dict = {'mosi': data_dir.joinpath('MOSI'), 'mosei': data_dir.joinpath(
             'MOSEI'), 'ur_funny': data_dir.joinpath('UR_FUNNY')}
-        word_emb_path = 'MSA/MISA/glove/glove.840B.300d.txt'
+        word_emb_path = '/home/hqyyqh888/SemanRes2/MSA/MISA/glove/glove.840B.300d.txt'
         assert(word_emb_path is not None)
         
-        self.dataset_dir = data_dict['mosi']
+        self.dataset_dir = data_dict['mosei']
         self.sdk_dir = sdk_dir
         self.word_emb_path = word_emb_path
         self.data_dir = self.dataset_dir

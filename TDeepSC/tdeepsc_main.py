@@ -36,18 +36,22 @@ def main(args):
         
         utils.load_state_dict(model, checkpoint_model, prefix=args.model_prefix)
 
-    
-    
+    # import timm
+    # model = timm.create_model("vit_small_patch32_224", pretrained=True)
+    # model.head = nn.Linear(model.head.in_features, 10)
+    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('=> Number of params: {} M'.format(n_parameters / 1e6))
+    print('')
     model.to(device)
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module  
     
-    print("------------------------------------------------------")
     ############## Get the data and dataloader
     
     # for name, param in model.named_parameters():
+    #     print(name)
     #     if name.startswith('text'):
     #         param.requires_grad=False
     #     else:
@@ -129,7 +133,9 @@ def main(args):
             for ansType in test_stats['perAnswerType']:
                 print("%s : %.02f" % (ansType, test_stats['perAnswerType'][ansType]))
         exit(0)
-
+    # utils.save_model(
+    #                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+    #                 loss_scaler=loss_scaler, epoch=10, model_ema=None)
     ################################## Start Training the T-DeepSC
     print(f"Start training for {args.epochs} epochs")
     max_accuracy = 0.0
@@ -163,6 +169,7 @@ def main(args):
                     args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                     loss_scaler=loss_scaler, epoch=epoch, model_ema=None)
         if dataloader_val is not None:
+            print(args.output_dir)
             if args.ta_perform.startswith('img') or args.ta_perform.startswith('text'):
                 test_stats = evaluate(ta_perform=args.ta_perform, 
                                     net=model, dataloader=dataloader_val, 
