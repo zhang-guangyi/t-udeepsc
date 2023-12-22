@@ -4,6 +4,35 @@ This repository is built upon [BEiT](https://github.com/microsoft/unilm/tree/mas
 
 We would gradually upload the full-version of the implementation.
 
+## Citation (Preprint Version)
+``` bash
+@ARTICLE{udeepsc,
+	title={A Unified Multi-Task Semantic Communication System for Multimodal Data},
+	author={Guangyi Zhang and Qiyu Hu and Zhijin Qin and Yunlong Cai and Guanding Yu and Xiaoming Tao},
+	journal={arXiv preprint arXiv:2209.07689},
+	year={2022}}
+```
+
+
+## Usage
+### Clone
+Clone this repository and enter the directory using the commands below:
+```bash
+git clone https://github.com/ipc-lab/NDIC.git
+cd NDIC/
+```
+
+### Requirements
+`Python 3.7.3` is recommended.
+
+Install the required packages with:
+```bash
+pip install -r requirements.txt
+```
+If you're having issues with installing PyTorch compatible with your CUDA version, we strongly suggest you refer to [related documentation page](https://pytorch.org/get-started/previous-versions/).
+
+
+
 ## DataSet Preparation
 
 ## TODO
