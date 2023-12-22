@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import mmsdk
+# import mmsdk
 import pickle
 import torch
 import pprint 
@@ -11,7 +11,7 @@ import torch.nn as nn
 from pathlib import Path
 # from transformers import *
 from tqdm import tqdm_notebook
-from mmsdk import mmdatasdk as md
+# from mmsdk import mmdatasdk as md
 from collections import defaultdict
 from torch.utils.data import DataLoader, Dataset
 from subprocess import check_call, CalledProcessError
