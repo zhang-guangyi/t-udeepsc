@@ -31,7 +31,7 @@ pip install -r requirements.txt (Not provided yet)
 ```
 If you're having issues with installing PyTorch compatible with your CUDA version, we strongly recommend related documentation page](https://pytorch.org/get-started/previous-versions/).
 
-##
+
 In our work, we use the bert model to initialize the text encoder, the pretrained weights should be placed at ./pretrain_models. The weights can be downloaded in the [huggingface websites](https://huggingface.co/prajjwal1/bert-small).
 
 ## Dataset Preparation
