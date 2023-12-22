@@ -18,30 +18,39 @@ We would gradually upload the full-version of the implementation.
 ### Clone
 Clone this repository and enter the directory using the commands below:
 ```bash
-git clone https://github.com/ipc-lab/NDIC.git
-cd NDIC/
+git clone https://github.com/zhang-guangyi/t-udeepsc.git
+cd t-udeepsc/
 ```
 
 ### Requirements
-`Python 3.7.3` is recommended.
+`Python 3.8.5` is recommended.
 
 Install the required packages with:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt (Not provided yet)
 ```
-If you're having issues with installing PyTorch compatible with your CUDA version, we strongly suggest you refer to [related documentation page](https://pytorch.org/get-started/previous-versions/).
+If you're having issues with installing PyTorch compatible with your CUDA version, we strongly recommend related documentation page](https://pytorch.org/get-started/previous-versions/).
 
 
 
 ## DataSet Preparation
+### CIFAR10
+Use the torchvision, the datasets will be dowmloaded automatically.
+
+### MOSEI and MOSI
+
+
+
 
 ## TODO
 - [x] implement the designed benchmark: task-oriented semantic communication works (T-DeepSC) for the considered tasks, including image(cls/recons), text(cls/recons) under analog transmission.
 - [x] implement the designed benchmark: TDeepSC for VQA and MSA under analog transmission.
 - [x] implement the digital transmission: vector quantization (VQ) and uniform scalar quantization (SQ). 
 - [x] implement the 16QAM and QPSK modulations.
-- [ ] dataset preparation
 - [X] the basic version of the unified semantic communication (U-DeepSC).
+- [x] dataset preparation.
+- [x] feature selection-based UDeepSC.
+- [ ] packages requirement.
 
 
 
