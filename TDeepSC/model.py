@@ -467,8 +467,8 @@ class TDeepSC_msa(nn.Module):
 @register_model
 def TDeepSC_imgc_model(pretrained=False, **kwargs):
     model = TDeepSC_imgc(
-        img_size=32,
-        patch_size=4,
+        img_size=224,
+        patch_size=32,
         encoder_embed_dim=384,
         encoder_depth=4,
         encoder_num_heads=6,

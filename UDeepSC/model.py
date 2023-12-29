@@ -337,9 +337,7 @@ class UDeepSC_M2(nn.Module):
             elif ta_perform.startswith('msa'):
                 x_img = x_img[:,0,:].unsqueeze(1)
                 x_img = self.transmit(x_img, noise_std, self.msa_img_encoder_to_channel, self.msa_img_channel_to_decoder)
-            
-            
-        
+
         if speech is not None:
             x_spe = self.spe_encoder(speech, ta_perform)
             x_spe = x_spe[:,0,:].unsqueeze(1)
@@ -355,7 +353,6 @@ class UDeepSC_M2(nn.Module):
             x = torch.cat([x_img,x_text,x_spe], dim=1)
 
         batch_size = x.shape[0]
-
         if ta_perform.endswith('r'):
             x = self.decoder(x, x, None, None, None) 
             x = self.head[ta_perform](x)
@@ -382,7 +379,7 @@ def UDeepSC_model(pretrained=False, **kwargs):
         img_embed_dim=384,
         text_embed_dim=384,
         speech_embed_dim=128,
-        img_encoder_depth=4,
+        img_encoder_depth=6,
         text_encoder_depth=4,
         speech_encoder_depth=4,
         encoder_num_heads=6,
@@ -411,7 +408,7 @@ def UDeepSC_new_model(pretrained=False, **kwargs):
         img_embed_dim=384,
         text_embed_dim=384,
         speech_embed_dim=128,
-        img_encoder_depth=4,
+        img_encoder_depth=6,
         text_encoder_depth=4,
         speech_encoder_depth=4,
         encoder_num_heads=6,
