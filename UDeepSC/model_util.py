@@ -339,14 +339,14 @@ class ViTEncoder(nn.Module):
         super().__init__()
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
 
-        self.patch_embed_imgc = PatchEmbed(
-            img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         self.patch_embed_imgr = PatchEmbed(
+            img_size=32, patch_size=4, in_chans=in_chans, embed_dim=embed_dim)
+        self.patch_embed_imgc = PatchEmbed(
             img_size=224, patch_size=32, in_chans=in_chans, embed_dim=embed_dim)
         self.linear_embed_vqa = nn.Linear(2048, self.embed_dim)
         self.linear_embed_msa = nn.Linear(35, self.embed_dim)
-        num_patches = self.patch_embed.num_patches
-
+        num_patches_imgr = self.patch_embed_imgr.num_patches
+        num_patches_imgc = self.patch_embed_imgc.num_patches
         # TODO: Add the cls token
         self.cls_token = {}
         self.cls_token['imgr'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -361,10 +361,12 @@ class ViTEncoder(nn.Module):
         self.task_embedd['msa'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
 
         if use_learnable_pos_emb:
-            self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
+            self.pos_embed_imgc = nn.Parameter(torch.zeros(1, num_patches_imgc + 1, embed_dim))
+            self.pos_embed_imgr = nn.Parameter(torch.zeros(1, num_patches_imgr + 1, embed_dim))
         else:
             # sine-cosine positional embeddings 
-            self.pos_embed = get_sinusoid_encoding_table(num_patches + 1, embed_dim)
+            self.pos_embed_imgc = get_sinusoid_encoding_table(num_patches_imgc + 1, embed_dim)
+            self.pos_embed_imgr = get_sinusoid_encoding_table(num_patches_imgr + 1, embed_dim)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = nn.ModuleList([
@@ -417,7 +419,10 @@ class ViTEncoder(nn.Module):
             cls_tokens = self.cls_token[ta_perform].expand(batch_size, -1, -1).to(x.device) 
             task_embedd = self.task_embedd[ta_perform].expand(batch_size, -1, -1).to(x.device) 
             x = torch.cat((cls_tokens, x), dim=1)
-            x = x + self.pos_embed.type_as(x).to(x.device).clone().detach()
+            if ta_perform.startswith('imgr'):
+                x = x + self.pos_embed_imgr.type_as(x).to(x.device).clone().detach()
+            elif ta_perform.startswith('imgc'):
+                x = x + self.pos_embed_imgc.type_as(x).to(x.device).clone().detach()
             x = torch.cat((x, task_embedd), dim=1)
         for blk in self.blocks:
             x = blk(x)
