@@ -91,9 +91,13 @@ def build_dataset_test(is_train, args):
         print("------------------------------------------------------")
 
     if  args.ta_perform.startswith('imgc'):
+        args.input_size = 224
+        transform = build_img_transform(is_train, args)
         dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                         download=True, if_class=True)
     elif  args.ta_perform.startswith('imgr'):
+        args.input_size = 32
+        transform = build_img_transform(is_train, args)
         dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                         download=True, if_class=False)
     elif args.ta_perform.startswith('textc'):
@@ -118,24 +122,28 @@ def build_dataset_test(is_train, args):
 
 def build_dataset_train(is_train, ta_sel, args):
     # if args.ta_perform.startswith('img'):
-    transform = build_img_transform(is_train, args)
-    print("Transform = ")
-    if isinstance(transform, tuple):
-        for trans in transform:
-            print(" - - - - - - - - - - ")
-            for t in trans.transforms:
-                print(t)
-    else:
-        for t in transform.transforms:
-            print(t)
-    print("------------------------------------------------------")
+    
+    # print("Transform = ")
+    # if isinstance(transform, tuple):
+    #     for trans in transform:
+    #         print(" - - - - - - - - - - ")
+    #         for t in trans.transforms:
+    #             print(t)
+    # else:
+    #     for t in transform.transforms:
+    #         print(t)
+    # print("------------------------------------------------------")
 
     datasets = {}
     for ta in ta_sel:
         if  ta.startswith('imgc'):
+            args.input_size = 224
+            transform = build_img_transform(is_train, args)
             dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                             download=True, if_class=True)
         elif  ta.startswith('imgr'):
+            args.input_size = 32
+            transform = build_img_transform(is_train, args)
             dataset = CIFAR_CR(args.data_path, train=is_train, transform=transform, 
                                             download=True, if_class=False)
         elif ta.startswith('textc'):
@@ -159,6 +167,7 @@ def build_dataset_train(is_train, ta_sel, args):
         datasets[ta] = dataset
 
     return datasets
+
 
 
 def build_img_transform(is_train, args):
