@@ -6,11 +6,16 @@ We would gradually upload the full-version of the implementation.
 
 ## Citation (Preprint Version)
 ``` bash
-@ARTICLE{udeepsc,
-	title={A Unified Multi-Task Semantic Communication System for Multimodal Data},
-	author={Guangyi Zhang and Qiyu Hu and Zhijin Qin and Yunlong Cai and Guanding Yu and Xiaoming Tao},
-	journal={arXiv preprint arXiv:2209.07689},
-	year={2022}}
+@ARTICLE{10431795,
+  author={Zhang, Guangyi and Hu, Qiyu and Qin, Zhijin and Cai, Yunlong and Yu, Guanding and Tao, Xiaoming},
+  journal={IEEE Transactions on Communications}, 
+  title={A Unified Multi-Task Semantic Communication System for Multimodal Data}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-1},
+  keywords={Task analysis;Semantics;Transmitters;Multitasking;Communication systems;Feature extraction;Decoding;Deep learning;dynamic overhead;multimodal data;multi-task semantic communication},
+  doi={10.1109/TCOMM.2024.3364990}}
 ```
 
 
@@ -128,4 +133,4 @@ Offline evaluation only support the VQA 2.0 *val* split, which is considered in 
 - [X] the basic version of the unified semantic communication (U-DeepSC).
 - [x] dataset preparation.
 - [x] feature selection-based UDeepSC.
-- [ ] packages requirement.
+- [x] packages requirement.
