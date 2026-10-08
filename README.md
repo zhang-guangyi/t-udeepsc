@@ -39,6 +39,14 @@ If you're having issues with installing PyTorch compatible with your CUDA versio
 
 In our work, we use the bert model to initialize the text encoder, the pretrained weights should be placed at ./pretrain_models. The weights can be downloaded in the [huggingface websites](https://huggingface.co/prajjwal1/bert-small).
 
+### UDeepSC Model Weights
+
+The UDeepSC model weights are shared via Baidu Netdisk:
+
+- Shared file: `udeepsc_weights`
+- Download: [Baidu Netdisk](https://pan.baidu.com/s/1QAuvAPcSxerMbEDQtw-TnQ?pwd=hkke)
+- Extraction code: `hkke`
+
 ## Dataset Preparation
 ### CIFAR10
 Use the torchvision, the datasets will be dowmloaded automatically. Then, place the dataset in path ./data/cifar
