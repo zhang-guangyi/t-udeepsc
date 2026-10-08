@@ -11,7 +11,6 @@ import numpy as np
 import torch.distributed as dist
 
 from pathlib import Path
-from torch._six import inf
 import torch.nn.functional as F
 from timm.utils import get_state_dict
 from timm.models import create_model
@@ -19,31 +18,33 @@ from collections import OrderedDict
 from pytorch_msssim import ms_ssim, ssim
 from collections import defaultdict, deque
 from timm.loss import LabelSmoothingCrossEntropy
+from torch.nn.modules.loss import CrossEntropyLoss as CrossEntropy
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import classification_report, accuracy_score, f1_score
+from math import inf
 ## Including pakages
 def sel_criterion_train(args, ta_sel, device):
     criterion_group = {}
     for ta in ta_sel:
         if ta.startswith('imgc'):
             criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing).to(device)
-            print("criterion for %s classification = %s" % (args.ta_perform,str(criterion)))
+            print("criterion for %s classification = %s" % (ta,str(criterion)))
         elif ta.startswith('textc'):
             criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing).to(device)
-            print("criterion for %s classification = %s" % (args.ta_perform,str(criterion)))
+            print("criterion for %s classification = %s" % (ta,str(criterion)))
         elif ta.startswith('imgr'):
             criterion = torch.nn.MSELoss()
-            print("criterion for %s Reconstruction = %s" % (args.ta_perform,str(criterion)))
+            print("criterion for %s Reconstruction = %s" % (ta,str(criterion)))
         elif ta.startswith('textr'):
-            criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing).to(device)
-            print("criterion for %s classification = %s" % (args.ta_perform,str(criterion)))
+            criterion = CrossEntropy().to(device)
+            print("criterion for %s classification = %s" % (ta,str(criterion)))
         elif ta.startswith('vqa'):
             criterion = torch.nn.BCELoss(reduction='sum').to(device)
-            print("criterion for %s classification = %s" % (args.ta_perform,str(criterion)))
+            print("criterion for %s classification = %s" % (ta,str(criterion)))
         elif ta.startswith('msa'):
             criterion = torch.nn.MSELoss().to(device)
-            print("criterion for %s Reconstruction = %s" % (args.ta_perform,str(criterion)))
+            print("criterion for %s Reconstruction = %s" % (ta,str(criterion)))
         criterion_group[ta] = criterion
     return criterion_group
 
@@ -71,12 +72,15 @@ def sel_criterion_test(args,device):
 
 def get_model(args):
     print(f"Creating model: {args.model}")
-    model = create_model(
-        args.model,
-        pretrained=False,
-        drop_path_rate=args.drop_path,
-        drop_block_rate=None,
-    )
+    model_kwargs = {
+        'pretrained': bool(args.init_ckpt),
+        'drop_path_rate': args.drop_path,
+        'drop_block_rate': None,
+    }
+    if args.init_ckpt:
+        model_kwargs['init_ckpt'] = args.init_ckpt
+        print(f"Initialize model from: {args.init_ckpt}")
+    model = create_model(args.model, **model_kwargs)
  
      
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)

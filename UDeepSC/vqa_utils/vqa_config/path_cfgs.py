@@ -1,11 +1,11 @@
 import os
 class path:
     def __init__(self):
-        self.dataset_path = 'data/vqa_datasets/vqa/'
-        self.feature_path = 'data/vqa_datasets/coco_extract/'
+        self.dataset_path = '/8T2/zhangguangyi/Data_vqa/datasets/vqa/'
+        self.feature_path = '/8T2/zhangguangyi/Data_vqa/datasets/coco_extract/'
         self.init_path()
 
-    def init_path(self):
+    def init_path(self): 
         self.img_feat_path = {
             'train': self.feature_path + 'train2014/',
             'val': self.feature_path + 'val2014/',

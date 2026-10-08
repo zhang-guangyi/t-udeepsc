@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('--input_size', default=32, type=int,
                         help='images input size for data')
     parser.add_argument('--drop_path', type=float, default=0.1, metavar='PCT',
-                        help='Drop path rate (default: 0.1)')
+                        help='Drop path rate (default: 0.1)')  
             
     # Optimizer parameters
     parser.add_argument('--opt', default='adamw', type=str, metavar='OPTIMIZER',
@@ -62,6 +62,8 @@ def get_args():
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=1000, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
+    parser.add_argument('--init_ckpt', default='',
+                        help='initialization checkpoint, e.g. ViT .npz for UDeepSC_new_model image branch')
     parser.add_argument('--auto_resume', action='store_true')
     parser.set_defaults(auto_resume=False)
 
@@ -91,8 +93,33 @@ def get_args():
     parser.add_argument('--save_ckpt', action='store_true')
     parser.set_defaults(save_ckpt=True)
 
-    parser.add_argument('--ta_perform', default='', choices=['imgc','textc', 'vqa', 'imgr', 'textr', 'msa'],
-                        type=str, help='Eval Data')
+    task_choices = ['imgc', 'textc', 'vqa', 'imgr', 'textr', 'msa']
+    parser.add_argument('--ta_perform', default='', choices=task_choices,
+                        type=str, help='Task used for evaluation during/after training')
+    parser.add_argument('--test_tasks', nargs='+', default=[], choices=task_choices,
+                        help='Tasks used for evaluation. Overrides ta_perform when provided.')
+    parser.add_argument('--train_tasks', nargs='+', default=['msa', 'textr'], choices=task_choices,
+                        help='Tasks used for multi-task training')
+    parser.add_argument('--tasks_per_step', default=0, type=int,
+                        help='Number of tasks aggregated in each optimizer step. 0 means all train_tasks.')
+    parser.add_argument('--task_weights', nargs='*', default=[],
+                        help='Task sampling weights, e.g. textr:0.4 msa:0.6. Used when tasks_per_step < number of train_tasks.')
+    parser.add_argument('--loss_weights', nargs='*', default=[],
+                        help='Loss weights, e.g. textr:5 msa:8. Defaults keep the original scaling.')
+    parser.add_argument('--train_snr', nargs='+', default=[12.0], type=float,
+                        help='Training SNR in dB. Pass one value for fixed SNR or multiple values to sample per batch.')
+    parser.add_argument('--test_snr', default=12.0, type=float,
+                        help='Evaluation SNR in dB')
+    parser.add_argument('--test_snr_list', nargs='*', default=None, type=float,
+                        help='Optional list of evaluation SNRs in dB. Overrides single test_snr for evaluation.')
+    parser.add_argument('--eval_freq', default=1, type=int,
+                        help='Evaluate every N epochs during training. 0 disables periodic evaluation.')
+    parser.add_argument('--eval_batches', default=0, type=int,
+                        help='Maximum validation batches per evaluation. 0 means full validation set.')
+    parser.add_argument('--grad_conflict_freq', default=0, type=int,
+                        help='Print pairwise task gradient cosine similarity every N train steps. 0 disables diagnostics.')
+    parser.add_argument('--print_freq', default=50, type=int,
+                        help='Print training progress every N steps.')
 
 
     return parser.parse_args()

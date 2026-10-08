@@ -10,12 +10,6 @@ from functools import partial
 import torch.nn.functional as F
 
 
-import timm
-net = timm.create_model("vit_base_patch16_384", pretrained=True)
-
-
-
-
 def _cfg(url='', **kwargs):
     return {
         'url': url,
@@ -25,29 +19,16 @@ def _cfg(url='', **kwargs):
         **kwargs
     }
 # nohup   > log_files/demo_t_14dB.log 2>&1 &
-def noise_gen(is_train):
-    min_snr, max_snr = -6, 18
-    diff_snr = max_snr - min_snr
-    
-    min_var, max_var = 10**(-min_snr/20), 10**(-max_snr/20)
-    diff_var = max_var - min_var
-    if is_train:
-        # b = torch.bernoulli(1/5.0*torch.ones(1))
-        # if b > 0.5:
-        #     channel_snr = torch.FloatTensor([20])
-        # else:               
-        #     channel_snr = torch.rand(1)*diff_snr+min_snr
-        # noise_var = 10**(-channel_snr/20)
-        # noise_var = torch.rand(1)*diff_var+min_var  
-        # channel_snr = 10*torch.log10((1/noise_var)**2)
-        # channel_snr = torch.rand(1)*diff_snr+min_snr
-        # noise_var = 10**(-channel_snr/20)
-        channel_snr = torch.FloatTensor([12])
-        noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
+def noise_gen(is_train, train_snr=12.0, device=None):
+    snr = torch.as_tensor(train_snr, dtype=torch.float32, device=device).flatten()
+    if snr.numel() == 0:
+        raise ValueError("train_snr must contain at least one value")
+    if is_train and snr.numel() > 1:
+        channel_snr = snr[torch.randint(snr.numel(), (1,), device=snr.device)]
     else:
-        channel_snr = torch.FloatTensor([12])
-        noise_var = torch.FloatTensor([1]) * 10**(-channel_snr/20)  
-    return channel_snr, noise_var 
+        channel_snr = snr[:1]
+    noise_std = 10 ** (-channel_snr / 20)
+    return channel_snr, noise_std
 
 
 
@@ -348,17 +329,19 @@ class ViTEncoder(nn.Module):
         num_patches_imgr = self.patch_embed_imgr.num_patches
         num_patches_imgc = self.patch_embed_imgc.num_patches
         # TODO: Add the cls token
-        self.cls_token = {}
-        self.cls_token['imgr'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.cls_token['imgc'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.cls_token['vqa'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.cls_token['msa'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.cls_token = nn.ParameterDict({
+            'imgr': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'imgc': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'vqa': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'msa': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+        })
 
-        self.task_embedd = {}
-        self.task_embedd['imgr'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.task_embedd['imgc'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.task_embedd['vqa'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.task_embedd['msa'] = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.task_embedd = nn.ParameterDict({
+            'imgr': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'imgc': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'vqa': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+            'msa': nn.Parameter(torch.zeros(1, 1, embed_dim)),
+        })
 
         if use_learnable_pos_emb:
             self.pos_embed_imgc = nn.Parameter(torch.zeros(1, num_patches_imgc + 1, embed_dim))
@@ -377,7 +360,8 @@ class ViTEncoder(nn.Module):
             for i in range(depth)])
         self.norm =  norm_layer(embed_dim)
         if use_learnable_pos_emb:
-            trunc_normal_(self.pos_embed, std=.02)
+            trunc_normal_(self.pos_embed_imgc, std=.02)
+            trunc_normal_(self.pos_embed_imgr, std=.02)
         for key in self.cls_token.keys():
             trunc_normal_(self.cls_token[key], std=.02)
             trunc_normal_(self.task_embedd[key], std=.02)
@@ -458,8 +442,6 @@ class SPTEncoder(nn.Module):
                 init_values=init_values)
             for i in range(depth)])
         self.norm =  norm_layer(embed_dim)
-        if use_learnable_pos_emb:
-            trunc_normal_(self.pos_embed, std=.02)
         trunc_normal_(self.cls_token, std=.02)
         trunc_normal_(self.task_embedd, std=.02)
         self.apply(self._init_weights)
@@ -581,4 +563,3 @@ class Channels():
         # Channel estimation
         Rx_sig = torch.matmul(Rx_sig, torch.inverse(H)).view(shape)
         return Rx_sig
-

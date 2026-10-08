@@ -68,10 +68,8 @@ class MOSI():
             self.train = load_pickle(data_path + '/train.pkl')
             self.dev = load_pickle(data_path + '/dev.pkl')
             self.test = load_pickle(data_path + '/test.pkl')
-     
-        except:
-            print('error')
-            pass
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"MSA dataset files not found under {data_path}") from exc
 
     def get_data(self, is_train):
         if is_train:
@@ -101,12 +99,14 @@ class MSA(Dataset):
 class Config_MSA(object):
     def __init__(self,):
         project_dir = Path(__file__).resolve().parent.parent
-        sdk_dir = project_dir.joinpath('/home/hqyyqh888/SemanRes2/MSA/CMU-MultimodalSDK/')
-        data_dir = project_dir.joinpath('data/msadata')
+        sdk_dir = Path(os.environ.get('MSA_SDK_DIR', '/home/hqyyqh888/SemanRes2/MSA/CMU-MultimodalSDK/'))
+        data_dir = Path(os.environ.get(
+            'MSA_DATA_DIR',
+            str(project_dir / 'data/msadata'),
+        ))
         data_dict = {'mosi': data_dir.joinpath('MOSI'), 'mosei': data_dir.joinpath(
             'MOSEI'), 'ur_funny': data_dir.joinpath('UR_FUNNY')}
-        word_emb_path = '/home/hqyyqh888/SemanRes2/MSA/MISA/glove/glove.840B.300d.txt'
-        assert(word_emb_path is not None)
+        word_emb_path = os.environ.get('MSA_WORD_EMB_PATH', '/home/hqyyqh888/SemanRes2/MSA/MISA/glove/glove.840B.300d.txt')
         
         self.dataset_dir = data_dict['mosei']
         self.sdk_dir = sdk_dir
