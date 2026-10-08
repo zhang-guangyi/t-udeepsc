@@ -15,7 +15,11 @@ from torchvision import datasets, transforms
 from msa_utils import PAD, Config_MSA, MSA
 # from pytorch_transformers import BertTokenizer
 from torch.utils.data.sampler import RandomSampler
-bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+BERT_TOKENIZER_DIR = os.environ.get(
+    'BERT_TOKENIZER_DIR',
+    '/8T2/zhangguangyi/UDeepSC_renew/pretrain_models/bert-small',
+)
+bert_tokenizer = BertTokenizer.from_pretrained(BERT_TOKENIZER_DIR, local_files_only=True)
 
 class BatchSchedulerSampler(torch.utils.data.sampler.Sampler):
     """
@@ -68,7 +72,7 @@ def build_dataloader(ta_sel, trainsets, args):
         Collate_fn = collate_fn if ta.startswith('msa') else None 
         trainloader = torch.utils.data.DataLoader(dataset=trainset,
                                                 sampler=BatchSchedulerSampler(dataset=trainset,batch_size=args.batch_size,
-                                                number_samp=10000*len(ta_sel)),
+                                                number_samp=args.num_samples),
                                                 num_workers=args.num_workers, pin_memory=True,
                                                 batch_size=args.batch_size, shuffle=False,collate_fn=Collate_fn)
         trainloaders[ta] = trainloader
@@ -77,19 +81,6 @@ def build_dataloader(ta_sel, trainsets, args):
 
 
 def build_dataset_test(is_train, args):
-    if args.ta_perform.startswith('img'):
-        transform = build_img_transform(is_train, args)
-        print("Transform = ")
-        if isinstance(transform, tuple):
-            for trans in transform:
-                print(" - - - - - - - - - - ")
-                for t in trans.transforms:
-                    print(t)
-        else:
-            for t in transform.transforms:
-                print(t)
-        print("------------------------------------------------------")
-
     if  args.ta_perform.startswith('imgc'):
         args.input_size = 224
         transform = build_img_transform(is_train, args)
@@ -117,6 +108,18 @@ def build_dataset_test(is_train, args):
     
     else:
         raise NotImplementedError()
+
+    if args.ta_perform.startswith('img'):
+        print("Transform = ")
+        if isinstance(transform, tuple):
+            for trans in transform:
+                print(" - - - - - - - - - - ")
+                for t in trans.transforms:
+                    print(t)
+        else:
+            for t in transform.transforms:
+                print(t)
+        print("------------------------------------------------------")
 
     return dataset
 
@@ -175,14 +178,13 @@ def build_img_transform(is_train, args):
     mean = (0.,0.,0.)
     std =  (1.,1.,1.)
     t = []
-    if is_train:
-        if resize_im:
-            crop_pct = 1
-            size = int(args.input_size / crop_pct)
-            t.append(
-                transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
-            )
-            t.append(transforms.CenterCrop(args.input_size))
+    if resize_im:
+        crop_pct = 1
+        size = int(args.input_size / crop_pct)
+        t.append(
+            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+        )
+        t.append(transforms.CenterCrop(args.input_size))
 
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(mean, std))
@@ -203,7 +205,7 @@ def collate_fn(batch):
     for sample in batch:
         text = " ".join(sample[0][3])
         encoded_bert_sent = bert_tokenizer.encode_plus(
-            text, max_length=SENT_LEN+2, add_special_tokens=True, pad_to_max_length=True,truncation=True)
+            text, max_length=SENT_LEN+2, add_special_tokens=True, padding='max_length', truncation=True)
         bert_details.append(encoded_bert_sent)
 
     bert_sentences = torch.LongTensor([sample["input_ids"] for sample in bert_details])
