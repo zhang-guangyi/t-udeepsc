@@ -44,8 +44,8 @@ In our work, we use the bert model to initialize the text encoder, the pretraine
 The UDeepSC model weights are shared via Baidu Netdisk:
 
 - Shared file: `udeepsc_weights`
-- Download: [Baidu Netdisk](https://pan.baidu.com/s/1QAuvAPcSxerMbEDQtw-TnQ?pwd=hkke)
-- Extraction code: `hkke`
+- Download: [Baidu Netdisk](https://pan.baidu.com/s/1fZHn5FyOi0LGibfzKAnjEQ?pwd=mpgc)
+- Extraction code: `mpgc`
 
 ## Dataset Preparation
 ### CIFAR10
