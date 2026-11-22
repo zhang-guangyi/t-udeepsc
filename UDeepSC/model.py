@@ -22,7 +22,7 @@ from model_util import _cfg, Channels, SPTEncoder, ViTEncoder, noise_gen
 
 BERT_ROOT = os.environ.get(
     "BERT_ROOT", "/8T2/zhangguangyi/UDeepSC_renew/pretrain_models"
-)
+) 
 VIT_BASE_PATCH32_224_URL = (
     "https://storage.googleapis.com/vit_models/augreg/"
     "B_32-i21k-300ep-lr_0.001-aug_medium1-wd_0.03-do_0.0-sd_0.0"
