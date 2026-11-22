@@ -38,7 +38,7 @@ TASK_TOKEN_LENGTHS = {
     "imgr": 64,
     "textc": 25,
     "vqa": 25,
-    "msa": 2,
+    "msa": 25,
     "textr": 66,
 }
 TASK_HEAD_DIMS = {
